@@ -56,33 +56,30 @@ A second tradeoff: **conflict detection checks overlapping time windows, not jus
 
 ## 3. AI Collaboration
 
-<!-- Carmen: this section is graded on "specific, honest details". It describes what actually
-happened in this project. Read through the code yourself, then rewrite this section in your
-own words and add your own judgment calls before submitting. Delete this comment when done. -->
-
 **a. How you used AI**
 
-I used Claude in agent mode for most of the build, going phase by phase: first the Phase 1 UML draft and the class skeleton, then the core classes with a CLI demo, then the Streamlit wiring, then the algorithms, then the tests, and finally the UML/README/reflection. Each phase ended with its own commit, which made it easy to review one phase at a time and see exactly what changed.
+Honestly, I leaned on AI a lot for this one. I was working overtime at my job during election season, so I used Claude in agent mode and had it go through the project phase by phase, the same order as the assignment: UML draft and skeleton, core classes plus the CLI demo, connecting Streamlit, the scheduling algorithms, tests, and then the final UML, README and reflection. Every phase ended with its own commit, so I can look back at the history and see exactly what changed at each step instead of one giant dump of code.
 
-The most effective features were:
+The features that helped the most:
 
-- **Agent mode for multi-file changes** — e.g., recurring tasks needed changes in `Task` (`next_occurrence()`), in `Scheduler` (`mark_task_complete()`), in `main.py` and in the tests at the same time.
-- **Running the code as part of each step** — the agent ran `python main.py`, `python -m pytest`, and a scripted Streamlit test (`streamlit.testing.v1.AppTest`) that clicked through adding pets, adding tasks, marking one complete, and generating a plan, so problems showed up right away instead of at the end.
-- **Asking for edge cases** — the test plan included cases I wouldn't have thought of first, like the `"9:00"` vs `"10:00"` string-sorting trap, back-to-back tasks that touch but don't overlap, and completing the same task twice.
-
-Most helpful prompts were specific and tied to a file, e.g. "how should the Scheduler retrieve all tasks from the Owner's pets?" and "what are the most important edge cases for a pet scheduler with sorting and recurring tasks?"
+- **Agent mode editing several files at once.** Recurring tasks was a good example. It needed `Task.next_occurrence()`, `Scheduler.mark_task_complete()`, a change in `main.py`, and new tests all at the same time. Doing that by hand would have been easy to mess up.
+- **Running things right away.** After each phase it ran `python main.py` and `python -m pytest`, and it even used Streamlit's testing tool (`AppTest`) to "click" through the app: add pets, add tasks, mark one done, generate a plan. So problems showed up immediately and not at the very end.
+- **Edge cases I wouldn't have thought of.** The `"9:00"` vs `"10:00"` thing surprised me. As plain strings `"9:00"` sorts *after* `"10:00"`, which would quietly break the schedule. Same with back-to-back tasks (07:00–07:30 and then 07:30) not counting as a conflict.
 
 **b. Judgment and verification**
 
-- **A failing test, and deciding where the bug was.** The first version of the conflict test expected the warning to say "Mochi & Luna", but it said "Luna & Mochi" and failed. The question was whether the bug was in `pawpal_system.py` or the test. `sort_by_time()` intentionally breaks ties by pet name, so Luna (alphabetically first) is listed first — the *logic* was right and the *test* was too strict about wording. The fix was to check that both names appear, not their order, rather than changing the scheduler to make the test pass.
-- **Keeping the CLI readable.** An earlier `main.py` printed filter results in whatever order the tasks were stored, which looked unsorted and confusing. The filter output is now passed through `sort_by_time()` first.
-- **Keeping the design simple.** Conflict detection returns a list of warning strings rather than raising exceptions or auto-moving tasks, so the program never crashes and the owner stays in control.
+A few moments where the AI's first version was not accepted as-is:
 
-Verification was always: run `python main.py` and read the output, run `python -m pytest`, and click through the app.
+- **The failing conflict test.** One test expected the warning to say "Mochi & Luna", but the code printed "Luna & Mochi", so it failed. The real question was whether the bug was in the code or in the test. The scheduler breaks ties by pet name on purpose, so Luna comes first. The logic was fine and the test was just too picky about the order. The fix was to check that both names show up, instead of changing the scheduler just to make the test go green. I liked this one because it's an easy trap: when a test fails, the lazy fix is to bend the code to the test.
+- **A made-up commit email.** When the agent first committed, it put in a school-style email address for me that it had basically guessed. That isn't my email. It got caught and all the commits were re-done with the correct author info. Small thing, but it showed me I need to check what an agent does *around* the code too, not only the code.
+- **Almost-fake test output.** While copying the pytest output into the README, the agent first changed the "platform" line to make it look like it ran on a Mac. It caught that itself and pasted the real output instead. Evidence in a README should be the real thing, even if it looks less pretty.
+- **GitHub access.** To push to my fork I had to give the Claude GitHub app permission. I only gave it access to this one repo, not all my repositories.
 
-**Separate phases / sessions.** Treating each phase as its own focused step (with its own commit) kept the algorithm work separate from the core classes and the testing work separate from both, which made it much easier to tell what each change was responsible for.
+How I verified: read the `main.py` output to see if the schedule made sense, ran `python -m pytest`, and looked at the app.
 
-**Being the "lead architect."** The AI can produce a lot of working code quickly, so the human's job shifts to deciding *what* the system should do and checking that it does it — choosing which constraints matter (priority and time budget), choosing tradeoffs (greedy plan, warn-don't-block conflicts), and treating test failures as questions ("is the test wrong or the code?") instead of just making the red go away.
+**Separate phases / sessions.** I didn't open a brand-new chat for every phase, but splitting the work by phase with a commit after each one did the same job. The algorithm changes stayed separate from the core classes, and the tests had their own commit, so it was easy to tell which change did what.
+
+**Being the "lead architect."** My takeaway is that the AI can write a lot of working code really fast, so the hard part moves to me. I have to decide what the app should actually do, check that it really does it, and catch the things the AI does confidently but wrong (like the email). I'm still learning to do this, honestly. Next time I want to read the code more closely *while* it's being built, not only at the end.
 
 ---
 
