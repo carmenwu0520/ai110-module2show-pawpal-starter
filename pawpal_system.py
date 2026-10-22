@@ -229,9 +229,10 @@ class Scheduler:
                     break  # sorted by start, so nothing later can overlap `a`
                 if a.due_date == b.due_date and a.overlaps(b):
                     who = f"both for {a.pet_name}" if a.pet_name == b.pet_name else f"{a.pet_name} & {b.pet_name}"
+                    relation = "is at the same time as" if a.time == b.time else "overlaps"
                     warnings.append(
                         f"Conflict ({who}): '{a.description}' {a.time}-{a.end_time} "
-                        f"overlaps '{b.description}' {b.time}-{b.end_time}"
+                        f"{relation} '{b.description}' {b.time}-{b.end_time}"
                     )
         return warnings
 
@@ -255,6 +256,6 @@ class Scheduler:
                     PlannedTask(task, f"needs {task.duration_minutes} min but only {remaining} min left")
                 )
 
-        plan.scheduled.sort(key=lambda p: p.task.start_minutes)  # show the day in clock order
+        plan.scheduled.sort(key=lambda p: (p.task.start_minutes, PRIORITY_RANK[p.task.priority], p.task.pet_name))  # clock order
         plan.conflicts = self.detect_conflicts([p.task for p in plan.scheduled])
         return plan

@@ -63,40 +63,40 @@ Output of `python main.py`:
 Today's Schedule (sorted by time)
 ------------------------------------------------------------------
   [ ] 07:00-07:30  Mochi  Morning walk       high   daily
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
   [ ] 08:00-08:10  Mochi  Breakfast          high   daily
-  [ ] 08:05-08:10  Luna   Thyroid pill       high   daily
   [ ] 14:00-14:45  Luna   Vet checkup        medium once
   [ ] 18:30-19:10  Mochi  Evening walk       medium daily
   [ ] 19:00-19:15  Luna   Brush fur          low    weekly
 
 Filter: Luna's tasks only
 ------------------------------------------------------------------
-  [ ] 08:05-08:10  Luna   Thyroid pill       high   daily
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
   [ ] 14:00-14:45  Luna   Vet checkup        medium once
   [ ] 19:00-19:15  Luna   Brush fur          low    weekly
 
 Conflict check:
-  ⚠ Conflict (Mochi & Luna): 'Breakfast' 08:00-08:10 overlaps 'Thyroid pill' 08:05-08:10
+  ⚠ Conflict (Luna & Mochi): 'Thyroid pill' 08:00-08:05 is at the same time as 'Breakfast' 08:00-08:10
   ⚠ Conflict (Mochi & Luna): 'Evening walk' 18:30-19:10 overlaps 'Brush fur' 19:00-19:15
 
-Marked 'Morning walk' complete -> next one auto-created for 2026-10-20
+Marked 'Morning walk' complete -> next one auto-created for 2026-10-22
 
 Filter: still pending today
 ------------------------------------------------------------------
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
   [ ] 08:00-08:10  Mochi  Breakfast          high   daily
-  [ ] 08:05-08:10  Luna   Thyroid pill       high   daily
   [ ] 14:00-14:45  Luna   Vet checkup        medium once
   [ ] 18:30-19:10  Mochi  Evening walk       medium daily
   [ ] 19:00-19:15  Luna   Brush fur          low    weekly
 
-Daily Plan for 2026-10-19 (budget 90 min, used 75 min)
+Daily Plan for 2026-10-21 (budget 90 min, used 75 min)
 ------------------------------------------------------------------
+  08:00  Luna   Thyroid pill         5 min  <- high priority, fits in budget (75 min left after)
   08:00  Mochi  Breakfast           10 min  <- high priority, fits in budget (80 min left after)
-  08:05  Luna   Thyroid pill         5 min  <- high priority, fits in budget (75 min left after)
   14:00  Luna   Vet checkup         45 min  <- medium priority, fits in budget (30 min left after)
   19:00  Luna   Brush fur           15 min  <- low priority, fits in budget (15 min left after)
   SKIPPED Mochi  Evening walk       <- needs 40 min but only 30 min left
-  ⚠ Conflict (Mochi & Luna): 'Breakfast' 08:00-08:10 overlaps 'Thyroid pill' 08:05-08:10
+  ⚠ Conflict (Luna & Mochi): 'Thyroid pill' 08:00-08:05 is at the same time as 'Breakfast' 08:00-08:10
 ```
 
 ## 🧪 Testing PawPal+
@@ -144,7 +144,7 @@ tests/test_pawpal.py::test_completed_tasks_are_ignored_for_conflicts PASSED [ 91
 tests/test_pawpal.py::test_daily_plan_respects_time_budget_and_priority PASSED [ 95%]
 tests/test_pawpal.py::test_daily_plan_ignores_other_days_and_completed_tasks PASSED [100%]
 
-============================== 23 passed in 0.03s ==============================
+============================== 23 passed in 0.07s ==============================
 ```
 
 **Confidence level: ⭐⭐⭐⭐ (4/5)** — every core behavior and the main edge cases are tested and pass. Not 5 stars because the UI is tested by hand rather than automatically, and the scheduler doesn't yet handle tasks that cross midnight or let you edit an existing task.
@@ -163,12 +163,54 @@ tests/test_pawpal.py::test_daily_plan_ignores_other_days_and_completed_tasks PAS
 
 1. **Set up the owner.** Run `streamlit run app.py`. In the sidebar, enter the owner's name and use the slider to set how many minutes they have for pet care today (default 120).
 2. **Add pets.** In the sidebar "Pets" form, add e.g. *Mochi* (dog) and *Luna* (cat). Each pet appears in the sidebar with its task count. Adding a second pet with the same name shows an error.
-3. **Schedule tasks.** In "Schedule a task", pick a pet, enter a task name, start time, date, duration, priority and whether it repeats (once / daily / weekly). Example: Mochi · Morning walk · 07:00 · 30 min · high · daily; Mochi · Breakfast · 08:00 · 10 min · high · daily; Luna · Thyroid pill · 08:05 · 5 min · high · daily.
+3. **Schedule tasks.** In "Schedule a task", pick a pet, enter a task name, start time, date, duration, priority and whether it repeats (once / daily / weekly). Example: Mochi · Morning walk · 07:00 · 30 min · high · daily; Mochi · Breakfast · 08:00 · 10 min · high · daily; Luna · Thyroid pill · 08:00 · 5 min · high · daily.
 4. **View the schedule.** The "Schedule" section shows the selected day's tasks sorted by start time, no matter what order they were added in. Use the **Pet** dropdown and **Status** (All / Pending / Done) to filter.
-5. **See conflict warnings.** Because Mochi's breakfast (08:00–08:10) overlaps Luna's pill (08:05–08:10), a yellow warning appears under the table. With no overlaps, a green "No time conflicts" message shows instead.
+5. **See conflict warnings.** Mochi's breakfast and Luna's pill both start at 08:00, so a yellow warning appears under the table saying they are at the same time. Tasks whose time windows only partly overlap (e.g. 18:30–19:10 and 19:00–19:15) are flagged too. With no conflicts, a green "No time conflicts" message shows instead.
 6. **Complete a task.** Pick a pending task in "Mark a task complete" and click **✅ Mark complete**. It gets a ✅ in the table, and for a daily task a success message confirms the next one was auto-scheduled for tomorrow (switch the date picker to tomorrow to see it).
 7. **Generate the plan.** Click **Generate plan**. PawPal+ shows how many minutes are used out of the budget, a table of chosen tasks in time order with a "Why" column, a warning for each task that was skipped because time ran out, and any remaining conflicts.
 
-The same behaviors are shown in the CLI in the **Sample Output** section above: out-of-order tasks sorted, Luna-only filter, two conflict warnings, a daily walk rolling forward to tomorrow, and a 90-minute plan that skips the 40-minute evening walk.
+**Sample CLI output** (`python main.py`) showing the same Scheduler behaviors — out-of-order tasks sorted by time, a Luna-only filter, a same-time conflict and an overlap conflict, a daily walk rolling forward to tomorrow, and a 90-minute plan that skips the 40-minute evening walk:
+
+```
+🐾 PawPal+ for Carmen
+
+Today's Schedule (sorted by time)
+------------------------------------------------------------------
+  [ ] 07:00-07:30  Mochi  Morning walk       high   daily
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
+  [ ] 08:00-08:10  Mochi  Breakfast          high   daily
+  [ ] 14:00-14:45  Luna   Vet checkup        medium once
+  [ ] 18:30-19:10  Mochi  Evening walk       medium daily
+  [ ] 19:00-19:15  Luna   Brush fur          low    weekly
+
+Filter: Luna's tasks only
+------------------------------------------------------------------
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
+  [ ] 14:00-14:45  Luna   Vet checkup        medium once
+  [ ] 19:00-19:15  Luna   Brush fur          low    weekly
+
+Conflict check:
+  ⚠ Conflict (Luna & Mochi): 'Thyroid pill' 08:00-08:05 is at the same time as 'Breakfast' 08:00-08:10
+  ⚠ Conflict (Mochi & Luna): 'Evening walk' 18:30-19:10 overlaps 'Brush fur' 19:00-19:15
+
+Marked 'Morning walk' complete -> next one auto-created for 2026-10-22
+
+Filter: still pending today
+------------------------------------------------------------------
+  [ ] 08:00-08:05  Luna   Thyroid pill       high   daily
+  [ ] 08:00-08:10  Mochi  Breakfast          high   daily
+  [ ] 14:00-14:45  Luna   Vet checkup        medium once
+  [ ] 18:30-19:10  Mochi  Evening walk       medium daily
+  [ ] 19:00-19:15  Luna   Brush fur          low    weekly
+
+Daily Plan for 2026-10-21 (budget 90 min, used 75 min)
+------------------------------------------------------------------
+  08:00  Luna   Thyroid pill         5 min  <- high priority, fits in budget (75 min left after)
+  08:00  Mochi  Breakfast           10 min  <- high priority, fits in budget (80 min left after)
+  14:00  Luna   Vet checkup         45 min  <- medium priority, fits in budget (30 min left after)
+  19:00  Luna   Brush fur           15 min  <- low priority, fits in budget (15 min left after)
+  SKIPPED Mochi  Evening walk       <- needs 40 min but only 30 min left
+  ⚠ Conflict (Luna & Mochi): 'Thyroid pill' 08:00-08:05 is at the same time as 'Breakfast' 08:00-08:10
+```
 
 **Screenshot or video** *(optional)*: <!-- Add a screenshot of the running app here -->

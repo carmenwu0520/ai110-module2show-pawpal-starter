@@ -158,6 +158,7 @@ def test_exact_same_time_is_flagged(setup):
     assert len(warnings) == 1
     # Ties are broken by pet name, so Luna is listed first — check both, not the order.
     assert "Luna" in warnings[0] and "Mochi" in warnings[0]
+    assert "same time" in warnings[0]
 
 
 def test_overlapping_windows_flagged_for_same_pet(setup):

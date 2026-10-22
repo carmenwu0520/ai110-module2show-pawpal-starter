@@ -44,7 +44,7 @@ def main() -> None:
     luna.add_task(Task("Brush fur", "19:00", 15, "low", "weekly"))
     mochi.add_task(Task("Evening walk", "18:30", 40, "medium", "daily"))
     mochi.add_task(Task("Breakfast", "08:00", 10, "high", "daily"))
-    luna.add_task(Task("Thyroid pill", "08:05", 5, "high", "daily"))  # overlaps Mochi's breakfast
+    luna.add_task(Task("Thyroid pill", "08:00", 5, "high", "daily"))  # same time as Mochi's breakfast
     morning_walk = Task("Morning walk", "07:00", 30, "high", "daily")
     mochi.add_task(morning_walk)
     luna.add_task(Task("Vet checkup", "14:00", 45, "medium", "once"))
